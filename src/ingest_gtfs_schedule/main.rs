@@ -243,7 +243,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .get::<bool>("forcewipe")
         .unwrap_or_else(|| false);
 
-    if (startfresh.unwrap_or(false) && isprod.unwrap_or(false) && forcewipe) {
+    if (startfresh.unwrap_or(false) && is_prod.unwrap_or(false) && forcewipe) {
         panic!("Cannot wipe the prod server without --forcewipe true");
     }
 
