@@ -1,4 +1,3 @@
-#![feature(future_join)]
 use actix_web::dev::Service;
 use actix_web::middleware::DefaultHeaders;
 use actix_web::{middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
@@ -388,7 +387,7 @@ async fn main() -> std::io::Result<()> {
                     .add(("Server", "Catenary"))
                     .add((
                         "Access-Control-Allow-Origin",
-                        "https://transitmap.kylerchin.com",
+                        "*",
                     ))
                     .add((
                         "Access-Control-Allow-Origin",
