@@ -142,9 +142,9 @@ pub async fn gettrip(
         let postgresresult = client
             .query(
                 "SELECT trip_id, onestop_feed_id, 
-        route_id, service_id, trip_headsign, trip_short_name, direction_id, 
-        block_id, shape_id, wheelchair_accessible, bikes_allowed FROM gtfs.trips
-         WHERE onestop_feed_id = $1 AND trip_id = $2;",
+                route_id, service_id, trip_headsign, trip_short_name, direction_id, 
+                block_id, shape_id, wheelchair_accessible, bikes_allowed FROM gtfs.trips
+                WHERE onestop_feed_id = $1 AND trip_id = $2;",
                 &[&req_feed_id, &trip_id],
             )
             .await;
@@ -204,18 +204,18 @@ pub async fn getinitdata(
         // (onestop_feed_id, max_lat, max_lon, min_lat, min_lon, operators, operators_to_gtfs_ids)
         let statics = client.query(
             "SELECT
-    onestop_feed_id, max_lat, max_lon, min_lat, min_lon, operators, operators_to_gtfs_ids
-     FROM gtfs.static_feeds;",
+            onestop_feed_id, max_lat, max_lon, min_lat, min_lon, operators, operators_to_gtfs_ids
+            FROM gtfs.static_feeds;",
             &[],
         );
 
         let operators = client.query(
             "SELECT onestop_operator_id, 
-    name, 
-    gtfs_static_feeds, 
-    gtfs_realtime_feeds, 
-    static_onestop_feeds_to_gtfs_ids, 
-    realtime_onestop_feeds_to_gtfs_ids FROM gtfs.operators;",
+            name, 
+            gtfs_static_feeds, 
+            gtfs_realtime_feeds, 
+            static_onestop_feeds_to_gtfs_ids, 
+            realtime_onestop_feeds_to_gtfs_ids FROM gtfs.operators;",
             &[],
         );
 
@@ -303,13 +303,13 @@ pub async fn getroutesperagency(
                 let postgresresult = client
                     .query(
                         "SELECT onestop_feed_id, route_id,
-     short_name, long_name, gtfs_desc, route_type, url, agency_id,
-     gtfs_order,
-     color,
-     text_color,
-     continuous_pickup,
-     continuous_drop_off,
-     shapes_list FROM gtfs.routes WHERE onestop_feed_id = $1;",
+                        short_name, long_name, gtfs_desc, route_type, url, agency_id,
+                        gtfs_order,
+                        color,
+                        text_color,
+                        continuous_pickup,
+                        continuous_drop_off,
+                        shapes_list FROM gtfs.routes WHERE onestop_feed_id = $1;",
                         &[&req_feed_id],
                     )
                     .await;
