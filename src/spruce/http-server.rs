@@ -403,6 +403,7 @@ async fn main() -> std::io::Result<()> {
             .service(gettrip)
             .service(amtrakproxy)
             .service(getinitdata)
+            .service(gtfsingesterrors)
             .service(microtime)
     })
     .workers(4);

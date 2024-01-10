@@ -237,13 +237,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let soft_insert = arguments::parse(std::env::args())
         .unwrap()
         .get::<bool>("softinsert");
-
-    let forcewipe = arguments::parse(std::env::args())
+    
+    let force_wipe = arguments::parse(std::env::args())
         .unwrap()
         .get::<bool>("forcewipe")
         .unwrap_or_else(|| false);
 
-    if (startfresh.unwrap_or(false) && is_prod.unwrap_or(false) && forcewipe) {
+    if (startfresh.unwrap_or(false) && is_prod.unwrap_or(false) && force_wipe) {
         panic!("Cannot wipe the prod server without --forcewipe true");
     }
 
