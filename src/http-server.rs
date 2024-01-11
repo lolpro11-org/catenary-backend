@@ -411,7 +411,7 @@ async fn main() -> std::io::Result<()> {
 
     let port = arguments::parse(std::env::args())
         .unwrap()
-        .get::<u16>("port");
+        .get::<u16>("port")
         .unwrap_or_else(|| 5401);
 
     let postgresstring = match postgresstring {
