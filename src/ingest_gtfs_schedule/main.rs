@@ -826,8 +826,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 let gtfs = gtfs_structures::GtfsReader::default()
                                     .read_from_path(&file_path);
     
-                                match gtfs 
-                                {
+                                match gtfs {
                                 Ok(gtfs) => {
     
                                     println!("read_duration: {:?}ms", gtfs.read_duration);

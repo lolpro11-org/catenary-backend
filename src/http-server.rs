@@ -1,4 +1,3 @@
-#![feature(future_join)]
 use actix_web::dev::Service;
 use actix_web::middleware::DefaultHeaders;
 use actix_web::{middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
@@ -8,7 +7,6 @@ use r2d2_postgres::{postgres::NoTls, PostgresConnectionManager};
 use serde_json::to_string;
 use serde_json::{json, to_string_pretty};
 use std::collections::HashMap;
-use std::future::join;
 use std::time::UNIX_EPOCH;
 use std::time::{Duration, SystemTime};
 use tokio_postgres::types::private::BytesMut;
@@ -241,18 +239,18 @@ pub async fn getinitdata(
         // (onestop_feed_id, max_lat, max_lon, min_lat, min_lon, operators, operators_to_gtfs_ids)
         let statics = client.query(
             "SELECT
-    onestop_feed_id, max_lat, max_lon, min_lat, min_lon, operators, operators_to_gtfs_ids
-     FROM gtfs.static_feeds;",
+            onestop_feed_id, max_lat, max_lon, min_lat, min_lon, operators, operators_to_gtfs_ids
+            FROM gtfs.static_feeds;",
             &[],
         );
 
         let operators = client.query(
             "SELECT onestop_operator_id, 
-    name, 
-    gtfs_static_feeds, 
-    gtfs_realtime_feeds, 
-    static_onestop_feeds_to_gtfs_ids, 
-    realtime_onestop_feeds_to_gtfs_ids FROM gtfs.operators;",
+            name, 
+            gtfs_static_feeds, 
+            gtfs_realtime_feeds, 
+            static_onestop_feeds_to_gtfs_ids, 
+            realtime_onestop_feeds_to_gtfs_ids FROM gtfs.operators;",
             &[],
         );
 
@@ -261,10 +259,8 @@ pub async fn getinitdata(
             &[],
         );
 
-        let runqueries = join!(statics, operators, realtime).await;
 
-        let operators_result: Vec<OperatorPostgres> = runqueries
-            .1
+        let operators_result: Vec<OperatorPostgres> = operators.await
             .unwrap()
             .iter()
             .map(|row| OperatorPostgres {
@@ -277,9 +273,7 @@ pub async fn getinitdata(
             })
             .collect();
 
-        let statics_result: Vec<StaticFeed> = runqueries
-            .0
-            .unwrap()
+        let statics_result: Vec<StaticFeed> = statics.await.unwrap()
             .iter()
             .map(|row| StaticFeed {
                 onestop_feed_id: row.get(0),
@@ -292,8 +286,7 @@ pub async fn getinitdata(
             })
             .collect();
 
-        let realtime_result: Vec<RealtimeFeedPostgres> = runqueries
-            .2
+        let realtime_result: Vec<RealtimeFeedPostgres> = realtime.await
             .unwrap()
             .iter()
             .map(|row| RealtimeFeedPostgres {
