@@ -396,12 +396,12 @@ struct GtfsIngestError<'a> {
 #[actix_web::get("/gtfsingesterrors")]
 pub async fn gtfsingesterrors(
     pool: web::Data<bb8::Pool<bb8_postgres::PostgresConnectionManager<NoTls>>>,
-    req: HttpRequest,
+    //req: HttpRequest,
 ) -> impl Responder {
-    let mut client = pool.get().await;
+    let client = pool.get().await;
 
     if client.is_ok() {
-        let mut client = client.unwrap();
+        let client = client.unwrap();
 
         let postgresresult = client
             .query("SELECT onestop_feed_id, error FROM gtfs.gtfs_errors;", &[])
