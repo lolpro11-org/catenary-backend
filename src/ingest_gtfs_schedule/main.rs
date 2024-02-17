@@ -6,6 +6,7 @@ use gtfs_structures::Trip;
 use itertools::Itertools;
 use serde::Serialize;
 use serde_json::Error as SerdeError;
+use tokio_postgres::Client;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fs;
@@ -24,7 +25,6 @@ use rgb::RGB;
 use std::collections::HashSet;
 use std::error::Error;
 use std::ops::Deref;
-use std::rc::Rc;
 use std::sync::Arc;
 use tokio_postgres::NoTls;
 extern crate tokio_threadpool;
@@ -198,83 +198,13 @@ pub fn make_hashmaps_of_children_stop_info(
     (stop_id_to_children_ids, stop_ids_to_children_route_types)
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    let postgresstring = arguments::parse(std::env::args())
-        .expect("Add a postgres string via --postgres <string>")
-        .get::<String>("postgres");
-
-    let threads = arguments::parse(std::env::args())
-        .expect("Add a thread count via --threads <positive int>")
-        .get::<usize>("threads");
-
-    let threadcount = threads.unwrap();
-
-    let postgresstring = match postgresstring {
-        Some(s) => s,
-        None => {
-            panic!("Add a postgres string via --postgres <string>");
-        }
-    };
-
-    let startfresh = arguments::parse(std::env::args())
-        .unwrap()
-        .get::<bool>("startfresh");
-
-    let limittostaticfeed = arguments::parse(std::env::args())
-        .unwrap()
-        .get::<String>("limittostaticfeed");
-
-    let is_prod = arguments::parse(std::env::args())
-        .unwrap()
-        .get::<bool>("isprod");
-
-    let skiptrips = arguments::parse(std::env::args())
-        .unwrap()
-        .get::<bool>("skiptrips")
-        .unwrap_or_else(|| false);
-
-    let soft_insert = arguments::parse(std::env::args())
-        .unwrap()
-        .get::<bool>("softinsert");
-    
-    let force_wipe = arguments::parse(std::env::args())
-        .unwrap()
-        .get::<bool>("forcewipe")
-        .unwrap_or_else(|| false);
-
-    if (startfresh.unwrap_or(false) && is_prod.unwrap_or(false) && force_wipe) {
-        panic!("Cannot wipe the prod server without --forcewipe true");
-    }
-
-    let schemaname = match is_prod {
-        Some(s) => {
-            if s {
-                "gtfs"
-            } else {
-                "gtfs_stage"
-            }
-        }
-        None => "gtfs_stage",
-    };
-
-    // Connect to the database.
-    let (client, connection) = tokio_postgres::connect(&postgresstring, NoTls).await?;
-
-    // The connection object performs the actual communication with the database,
-    // so spawn it off to run on its own.
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
-        }
-    });
-
+async fn makedb(client: &Client, schemaname: String, is_prod: Option<bool>, startfresh: Option<bool>) {
     client
         .batch_execute(
             "
         CREATE EXTENSION IF NOT EXISTS postgis;
         CREATE EXTENSION IF NOT EXISTS hstore;
-    ",
+            ",
         )
         .await
         .unwrap();
@@ -372,17 +302,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     client
         .batch_execute(
             format!(
-                "
-        CREATE TABLE IF NOT EXISTS {}.realtime_feeds (
-            onestop_feed_id text PRIMARY KEY,
-            name text,
-            operators text[],
-            operators_to_gtfs_ids hstore,
-            max_lat double precision,
-            max_lon double precision,
-            min_lat double precision,
-            min_lon double precision
-        );",
+                "CREATE TABLE IF NOT EXISTS {}.realtime_feeds (
+                    onestop_feed_id text PRIMARY KEY,
+                    name text,
+                    operators text[],
+                    operators_to_gtfs_ids hstore,
+                    max_lat double precision,
+                    max_lon double precision,
+                    min_lat double precision,
+                    min_lon double precision
+                );",
                 schemaname
             )
             .as_str(),
@@ -540,7 +469,79 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     println!("Finished making database");
+}
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let postgresstring = arguments::parse(std::env::args())
+        .expect("Add a postgres string via --postgres <string>")
+        .get::<String>("postgres");
 
+    let threads = arguments::parse(std::env::args())
+        .expect("Add a thread count via --threads <positive int>")
+        .get::<usize>("threads");
+
+    let threadcount = threads.unwrap();
+
+    let postgresstring = match postgresstring {
+        Some(s) => s,
+        None => {
+            panic!("Add a postgres string via --postgres <string>");
+        }
+    };
+
+    let startfresh = arguments::parse(std::env::args())
+        .unwrap()
+        .get::<bool>("startfresh");
+
+    let limittostaticfeed = arguments::parse(std::env::args())
+        .unwrap()
+        .get::<String>("limittostaticfeed");
+
+    let is_prod = arguments::parse(std::env::args())
+        .unwrap()
+        .get::<bool>("isprod");
+
+    let skiptrips = arguments::parse(std::env::args())
+        .unwrap()
+        .get::<bool>("skiptrips")
+        .unwrap_or_else(|| false);
+
+    let soft_insert = arguments::parse(std::env::args())
+        .unwrap()
+        .get::<bool>("softinsert");
+    
+    let force_wipe = arguments::parse(std::env::args())
+        .unwrap()
+        .get::<bool>("forcewipe")
+        .unwrap_or_else(|| false);
+
+    if (startfresh.unwrap_or(false) && is_prod.unwrap_or(false) && force_wipe) {
+        panic!("Cannot wipe the prod server without --forcewipe true");
+    }
+
+    let schemaname = match is_prod {
+        Some(s) => {
+            if s {
+                "gtfs"
+            } else {
+                "gtfs_stage"
+            }
+        }
+        None => "gtfs_stage",
+    };
+
+    // Connect to the database.
+    let (client, connection) = tokio_postgres::connect(&postgresstring, NoTls).await?;
+
+    // The connection object performs the actual communication with the database,
+    // so spawn it off to run on its own.
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+
+    makedb(&client, schemaname.to_string(), is_prod, startfresh).await;
     #[derive(Debug, Clone)]
     struct OperatorPairInfo {
         operator_id: String,
@@ -557,11 +558,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let entries = fs::read_dir("transitland-atlas/feeds").unwrap();
     let mut feedhashmap: BTreeMap<String, dmfr::Feed> = BTreeMap::new();
     let mut operatorhashmap: BTreeMap<String, dmfr::Operator> = BTreeMap::new();
-    let mut operator_to_feed_hashmap: BTreeMap<String, Vec<dmfr::OperatorAssociatedFeedsItem>> =
-        BTreeMap::new();
+    let mut operator_to_feed_hashmap: BTreeMap<String, Vec<dmfr::OperatorAssociatedFeedsItem>> = BTreeMap::new();
     let mut feed_to_operator_hashmap: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    let mut feed_to_operator_pairs_hashmap: BTreeMap<String, Vec<OperatorPairInfo>> =
-        BTreeMap::new();
+    let mut feed_to_operator_pairs_hashmap: BTreeMap<String, Vec<OperatorPairInfo>> = BTreeMap::new();
     let feeds_to_discard = vec![
         "f-9q8y-sfmta",
         "f-9qc-westcat~ca~us",
@@ -1604,7 +1603,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ]).await.unwrap();
     }
     for x in 0..1 {
-        println!("Waiting for {} seconds", x);
+        println!("Waiting for {} seconds", 1);
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
