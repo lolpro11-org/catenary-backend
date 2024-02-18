@@ -470,6 +470,7 @@ async fn makedb(client: &Client, schemaname: String, is_prod: Option<bool>, star
 
     println!("Finished making database");
 }
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let postgresstring = arguments::parse(std::env::args())
@@ -758,14 +759,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let client = pool.get().await.unwrap();
     for (key, feed) in feedhashmap.to_owned().into_iter() {
         let pool = pool.to_owned();
-        let mut dothetask = true;
         if feeds_to_discard.contains(&key.as_str()) {
-            dothetask = false;
             println!("Cancel SF bay override");
+            continue;
         }
         if limittostaticfeed.is_some() {
             if limittostaticfeed.as_ref().unwrap().as_str() != key.as_str() {
-                dothetask = false;
+                continue;
                 //println!("Cancelled because limit to static feed");
             }
         }
@@ -774,8 +774,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
              &[&feed.id])
              .await.unwrap();
             if already_done.len() == 1 {
-                dothetask = false;
-                // println!("Already done {}", &feed.id);
+                continue;
             }
         }
         let bruhitfailed: Vec<OperatorPairInfo> = vec![];
@@ -795,8 +794,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let client = pool.get().await.unwrap();
     
                 //println!("Feed in future {}: {:#?}", key, feed);
-    
-               if dothetask {
+
                 match feed.spec {
                     dmfr::FeedSpec::Gtfs => {
                         //println!("{:?}", feed.urls);
@@ -1494,10 +1492,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         println!("skipping {}, does not match dmfr feed spec", &key);
                     }
                 }
-            
-            }
-        
-    }));
+        }));
     }
     futures::future::join_all(handles).await;
     println!("Done ingesting all gtfs statics");
