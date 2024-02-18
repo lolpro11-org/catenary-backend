@@ -786,8 +786,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         for operator_pair in listofoperatorpairs {
             operator_pairs_hashmap.insert(operator_pair.operator_id, operator_pair.gtfs_agency_id);
         }
-        let items: Vec<String> = vec![];
-        let operator_id_list = feed_to_operator_hashmap.get(&key).unwrap_or_else(|| &items);
+        //let items: Vec<String> = vec![];
+        //let operator_id_list = feed_to_operator_hashmap.get(&key).unwrap_or_else(|| &items);
         handles.push(threaded_rt.spawn(async move 
             {
                 //it timesout here a lot
