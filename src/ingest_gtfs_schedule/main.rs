@@ -1405,9 +1405,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                                     println!("Convex Hull Algo for {} took {}μs", feed.id, (stop_hull_time - start_hull_time) / 1000);
                                     println!("{} points", shape_points.len());
-
-                                        let hull_postgres = hull
-                                        .to_postgis_wgs84();
                                     
                                     let hull_postgres = match num_of_points_polygon {
                                         0 => geo::Polygon::new(
@@ -1415,7 +1412,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                                 (most_lon.unwrap(), most_lat.unwrap()),
                                              (most_lon.unwrap(), least_lat.unwrap()),
                                              (least_lon.unwrap(), least_lat.unwrap()), (least_lon.unwrap(), most_lat.unwrap()), (most_lon.unwrap(), most_lat.unwrap())]),vec![]).to_postgis_wgs84(),
-                                        _ => hull_postgres
+                                        _ => hull.to_postgis_wgs84()
                                     };
 
                                     if gtfs.routes.len() > 0 as usize {
