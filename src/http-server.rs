@@ -177,6 +177,7 @@ pub async fn gettrip(
         let req_feed_id = qs.get("feed_id").unwrap();
         let trip_id = qs.get("trip_id").unwrap();
 
+        println!("{}, {}", req_feed_id, trip_id);
         let postgresresult = client
             .query(
                 "SELECT trip_id, onestop_feed_id, 
@@ -330,16 +331,17 @@ pub async fn getroutesperagency(
                 .insert_header(("Content-Type", "text/plain"))
                 .body("No feed_id specified"),
             Some(req_feed_id) => {
+                println!("{}", req_feed_id);
                 let postgresresult = client
                     .query(
                         "SELECT onestop_feed_id, route_id,
-     short_name, long_name, gtfs_desc, route_type, url, agency_id,
-     gtfs_order,
-     color,
-     text_color,
-     continuous_pickup,
-     continuous_drop_off,
-     shapes_list FROM gtfs.routes WHERE onestop_feed_id = $1;",
+                        short_name, long_name, gtfs_desc, route_type, url, agency_id,
+                        gtfs_order,
+                        color,
+                        text_color,
+                        continuous_pickup,
+                        continuous_drop_off,
+                        shapes_list FROM gtfs.routes WHERE onestop_feed_id = $1;",
                         &[&req_feed_id],
                     )
                     .await;
@@ -450,7 +452,7 @@ async fn main() -> std::io::Result<()> {
         Some(s) => s,
         None => {
             println!("Postgres string not avaliable, using default");
-            "host=localhost user=postgres".to_string()
+            "host=localhost user=postgres password=postgres".to_string()
         }
     };
 

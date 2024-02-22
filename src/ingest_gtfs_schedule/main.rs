@@ -763,12 +763,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
             println!("Cancel SF bay override");
             continue;
         }
-        if limittostaticfeed.is_some() {
-            if limittostaticfeed.as_ref().unwrap().as_str() != key.as_str() {
-                continue;
-                //println!("Cancelled because limit to static feed");
-            }
+        if limittostaticfeed.is_some() || limittostaticfeed.as_ref().unwrap().as_str() != key.as_str() {
+            continue;
+            //println!("Cancelled because limit to static feed");
         }
+
         if soft_insert == Some(true) {
             let already_done = client.query(format!("SELECT onestop_feed_id, created_trips, updated_trips_time_ms FROM {schemaname}.feeds_updated WHERE onestop_feed_id = $1;").as_str(),
              &[&feed.id])
@@ -777,6 +776,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 continue;
             }
         }
+
         let bruhitfailed: Vec<OperatorPairInfo> = vec![];
         let listofoperatorpairs = feed_to_operator_pairs_hashmap
             .get(&feed.id)
@@ -807,19 +807,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
                             let file_path = format!("gtfs_uncompressed/{}/", key);
     
-    
                             if path_exists(&file_path) {
-    
                                 //feed exists
-    
                                 println!("Starting read for {}", &key);
     
-                                
-                            let folder_size = get_size(&file_path).unwrap();
-                            println!("size: {} kB", folder_size / 1000); 
+                                let folder_size = get_size(&file_path).unwrap();
+                                println!("size: {} kB", folder_size / 1000); 
     
-                                let gtfs = gtfs_structures::GtfsReader::default()
-                                    .read_from_path(&file_path);
+                                let gtfs = gtfs_structures::GtfsReader::default().read_from_path(&file_path);
     
                                 match gtfs {
                                 Ok(gtfs) => {
@@ -1537,9 +1532,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 .insert(x.feed_onestop_id.to_owned().unwrap(), x.gtfs_agency_id);
                             simplified_array_realtime.push(x.feed_onestop_id.to_owned().unwrap());
                         }
-                        _ => {
-                            //do nothing
-                        }
+                        _ => {}
                     }
                 }
             }
@@ -1597,10 +1590,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .as_str(),&[
         ]).await.unwrap();
     }
-    for x in 0..1 {
-        println!("Waiting for {} seconds", 1);
-        std::thread::sleep(std::time::Duration::from_secs(1));
-    }
+
+    println!("Waiting for {} seconds", 1);
+    std::thread::sleep(std::time::Duration::from_secs(1));
 
     Ok(())
 }
