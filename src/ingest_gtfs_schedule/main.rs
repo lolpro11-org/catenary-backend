@@ -583,8 +583,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     eprintln!("Error Reading File: {}", contents.unwrap_err());
                     continue;
                 }
-                let dmfrinfo: Result<dmfr::DistributedMobilityFeedRegistry, SerdeError> =
-                    serde_json::from_str(&contents.unwrap());
+                let dmfrinfo: Result<dmfr::DistributedMobilityFeedRegistry, SerdeError> = serde_json::from_str(&contents.unwrap());
                 match dmfrinfo {
                     Ok(dmfrinfo) => {
                         dmfrinfo.feeds.iter().for_each(|feed| {
@@ -657,8 +656,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                                     .to_owned()
                                                     .unwrap_or_else(|| feed.id.to_owned()),
                                             ) {
-                                                existing_associated_feeds
-                                                    .push(associated_feed.to_owned());
+                                                existing_associated_feeds.push(associated_feed.to_owned());
                                             }
                                         });
                                     operator_to_feed_hashmap.insert(
@@ -1084,16 +1082,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                            let route_label:String = route_ids.iter().map(|route_id| {
                                             let route = gtfs.routes.get(route_id);
                                             if route.is_some() {
-                                                if route.unwrap().short_name.as_str() == "" {
-                                                  if route.unwrap().long_name.as_str() == "" {
+                                                if <std::option::Option<std::string::String> as Clone>::clone(&route.unwrap().short_name).unwrap().as_str() == "" {
+                                                  if <std::option::Option<std::string::String> as Clone>::clone(&route.unwrap().long_name).unwrap().as_str() == "" {
                                                     return route_id.to_string();
                                                   } else {
-                                                    return route.unwrap().long_name.to_owned()
+                                                    return route.unwrap().long_name.to_owned().unwrap()
                                                     .replace("-16168","")
                                                     .replace("Counterclockwise", "ACW").replace("counterclockwise", "ACW").replace("clockwise", "CW").replace("Clockwise", "CW");
                                                   }
                                                 } else {
-                                                    return route.unwrap().short_name.to_owned()
+                                                    return route.unwrap().short_name.to_owned().unwrap()
                                                     .replace("-16168","")
                                                     .replace("Counterclockwise", "ACW").replace("counterclockwise", "ACW").replace("clockwise", "CW").replace("Clockwise", "CW");
                                                 }
@@ -1153,7 +1151,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                         color = $10,
                                         text_color = $11;
                                         ").as_str()).await.unwrap();
-                                        let long_name = titlecase_process_new_nooption(&route.long_name);
+                                        let long_name = titlecase_process_new_nooption(&<std::option::Option<std::string::String> as Clone>::clone(&route.long_name).unwrap());
                                         client.query(
                                             &route_prepared,
                                             &[
@@ -1228,7 +1226,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                                             client.query(
                                                 &statement,
-                                        &[
+                                                &[
                                                     &feed_id,
                                                     &trip.id,
                                                     &trip.service_id,
@@ -1314,7 +1312,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                         let list_of_stops = arc_of_stop_ids.iter().map(|stop_id| gtfs.stops.get(stop_id).unwrap().to_owned()).collect::<Vec<Arc<gtfs_structures::Stop>>>();
                                         let dont_hide_this_stop_candidates = list_of_stops.iter().filter(|stop| stop.parent_station.is_none()).map(|stop| stop.to_owned()).collect::<Vec<Arc<gtfs_structures::Stop>>>();
                                        // let dont_hide_this_stop_candidates_stop_ids = dont_hide_this_stop_candidates.iter().map(|stop| stop.id.to_owned()).collect::<HashSet<String>>();
-                                       let dont_hide_this_stop_candidates_names = dont_hide_this_stop_candidates.iter().map(|stop| stop.name.to_owned()).collect::<HashSet<String>>();
+                                       let dont_hide_this_stop_candidates_names = dont_hide_this_stop_candidates.iter().map(|stop| stop.name.to_owned().unwrap()).collect::<HashSet<String>>();
 
 
                                         for stop in list_of_stops {
@@ -1329,7 +1327,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                             // Thank you professor Michael Goodrich, I am forever blessed with complexity analysis of algorithms
                                             if let gtfs_structures::LocationType::StationEntrance = stop.location_type {} else {
                                                 //prevents "7th St/Metro Center" from shadowing "7th St/Metro Center - Metro A & E Lines"
-                                                if dont_hide_this_stop_candidates_names.contains(&stop.name) {
+                                                if dont_hide_this_stop_candidates_names.contains(&<std::option::Option<std::string::String> as Clone>::clone(&stop.name).unwrap()) {
                                                     hidden_stops = true
                                                 }
                                             }
@@ -1351,7 +1349,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                             y: stop.latitude.unwrap(),
                                             srid: Some(4326),
                                         };
-                                        let name = titlecase_process_new_nooption(&stop.name);
+                                        let name = titlecase_process_new_nooption(&<std::option::Option<std::string::String> as Clone>::clone(&stop.name).unwrap());
                                         let displayname = name.to_owned().to_string().replace(" Station","").replace("Northbound","N.B.").replace("Eastbound","E.B.").replace("Southbound","S.B.").replace("Westbound","W.B.");
 
                                         let fetch_of_dedup = hashmap_stops_dedup_meta.get(&stop.id);

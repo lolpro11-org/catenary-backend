@@ -1,7 +1,9 @@
 [package]
 name = "catenary-backend"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+description = "import and backend for gtfs data"
+license-file = "LICENSE"
 
 [lints.rust]
 unused_must_use = "deny"
@@ -15,14 +17,16 @@ crossbeam-utils = "0.8.16"
 memoffset = "0.9.0"
 time = "0.3.30"
 rouille = "3.0"
-gtfs-rt = {git = "https://github.com/lolpro11/gtfs-rt"}
+#gtfs-rt = {git = "https://github.com/lolpro11/gtfs-rt"}
+gtfs-rt = "0.4"
 reqwest = {version = "0.11", default-features = false, features = ["gzip","brotli","rustls-tls","deflate"]}
 protobuf = "3.3"
 csv = "1.3"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.33", features = ["full"] }
 futures = "0.3"
-gtfs-structures = { git = "https://github.com/lolpro11/gtfs-structure"}
+#gtfs-structures = { git = "https://github.com/lolpro11/gtfs-structure"}
+gtfs-structures = "0.41"
 tungstenite = "0.21.0"
 postgres = "0.19.7"
 postgis = "0.9.0"
