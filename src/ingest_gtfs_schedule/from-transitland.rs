@@ -1,7 +1,8 @@
 use futures::StreamExt;
 use reqwest::Request;
 use serde_json::Error as SerdeError;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 use std::fs;
 mod dmfr;
 use futures;
@@ -93,7 +94,7 @@ async fn main() {
                     }
                     let dmfrinfo = dmfrinfo.unwrap();
                     dmfrinfo.feeds.iter().for_each(|feed| {
-                        println!("Feed {}: {:#?}", feed.id.clone(), feed);
+                        //println!("Feed {}: {:#?}", feed.id.clone(), feed);
                         if feedhashmap.contains_key(&feed.id) {
                             feedhashmap.insert(feed.id.clone(), feed.clone());
                         } else {
@@ -183,6 +184,7 @@ async fn main() {
             }
         }
 
+        #[derive(Clone, Debug)]
         struct staticfeedtodownload {
             feed_id: String,
             url: String,
@@ -227,7 +229,7 @@ async fn main() {
         println!("Downloading zip files now");
 
         let static_fetches =
-            futures::stream::iter(vecofstaticstrings.into_iter().map(|staticfeed| async move {
+            futures::stream::iter(vecofstaticstrings.clone().into_iter().map(|staticfeed| async move {
                 let client = reqwest::ClientBuilder::new()
                     .deflate(true)
                     .gzip(true)
@@ -268,6 +270,33 @@ async fn main() {
         static_fetches.await;
 
         println!("Done fetching all zip files");
+        
+        let mut downloaded = HashSet::new();
+        if let Ok(entries) = fs::read_dir("gtfs_static_zips") {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let file_name = entry.file_name();
+                    let file_path = PathBuf::from(&file_name);
+                    
+                    if let Some(file_stem) = file_path.file_stem() {
+                        if let Some(file_stem_str) = file_stem.to_str() {
+                            downloaded.insert(file_stem_str.to_string());
+                        }
+                    }
+                }
+            }
+        } else {
+            eprintln!("Error reading directory");
+        }
+        println!("{:#?}", downloaded);
+        let mut missing =  Vec::new();
+        for url in &vecofstaticstrings {
+            if !downloaded.contains(&url.feed_id) {
+                missing.push(url.clone());
+            }
+        }
+        println!("{:#?}", missing);
+        println!("Total feeds missing: {}", missing.len());
 
         /*for (key, value) in operator_to_feed_hashmap.into_iter() {
             println!("{} / {:#?}", key, value);
